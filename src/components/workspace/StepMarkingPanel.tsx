@@ -215,11 +215,11 @@ export const StepMarkingPanel: React.FC<StepMarkingPanelProps> = ({
       {/* Action Footer Bar */}
       <div className="p-4 bg-slate-50 border-t border-slate-200 space-y-3">
         {/* Main Approval Action Row */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
           <Button
             variant="gold"
             size="lg"
-            className="flex-1 text-slate-950 font-extrabold"
+            className="w-full sm:flex-1 text-slate-950 font-extrabold min-h-[44px]"
             leftIcon={<CheckCircle2 className="w-5 h-5 text-slate-950" />}
             rightIcon={<ArrowRight className="w-4 h-4" />}
             onClick={onApproveAndNext}
@@ -227,24 +227,28 @@ export const StepMarkingPanel: React.FC<StepMarkingPanelProps> = ({
             Approve & Next [A]
           </Button>
 
-          <Button
-            variant="outline"
-            size="md"
-            onClick={onRequestReview}
-            title="Request Review from Head of Department"
-          >
-            Review Required
-          </Button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              size="md"
+              className="flex-1 sm:flex-none min-h-[44px]"
+              onClick={onRequestReview}
+              title="Request Review from Head of Department"
+            >
+              Review Required
+            </Button>
 
-          <Button
-            variant="ghost"
-            size="md"
-            className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-            onClick={() => setFlagModalOpen(true)}
-            title="Flag Paper for handwriting issue"
-          >
-            <Flag className="w-4 h-4" />
-          </Button>
+            <Button
+              variant="ghost"
+              size="md"
+              className="text-rose-600 hover:bg-rose-50 hover:text-rose-700 min-h-[44px] min-w-[44px] flex items-center justify-center"
+              onClick={() => setFlagModalOpen(true)}
+              title="Flag Paper for handwriting issue"
+              aria-label="Flag Paper"
+            >
+              <Flag className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
 
         {/* Keyboard Shortcuts Helper */}

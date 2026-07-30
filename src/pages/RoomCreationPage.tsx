@@ -255,11 +255,12 @@ export const RoomCreationPage: React.FC = () => {
         </Card>
 
         {/* Bottom Action Bar */}
-        <div className="flex items-center justify-end gap-4 pt-4">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 sm:gap-4 pt-4">
           <Button
             variant="outline"
             size="lg"
             type="button"
+            className="w-full sm:w-auto min-h-[44px]"
             onClick={() => navigate('/dashboard')}
           >
             Cancel
@@ -269,7 +270,7 @@ export const RoomCreationPage: React.FC = () => {
             size="lg"
             type="submit"
             isLoading={isSubmitting}
-            className="font-extrabold text-slate-950 px-8 shadow-xl shadow-amber-500/20"
+            className="w-full sm:w-auto font-extrabold text-slate-950 px-8 shadow-xl shadow-amber-500/20 min-h-[44px]"
             rightIcon={<ArrowRight className="w-5 h-5 text-slate-950" />}
           >
             Create Room & Launch AI Evaluation

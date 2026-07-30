@@ -22,7 +22,7 @@ export const AppLayout: React.FC = () => {
       <Navbar />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <main className={`flex-1 overflow-y-auto ${isWorkspacePage ? 'p-0' : 'p-6 lg:p-8'}`}>
+        <main className={`flex-1 overflow-y-auto min-w-0 ${isWorkspacePage ? 'p-0' : 'p-4 sm:p-6 lg:p-8'}`}>
           <Outlet />
         </main>
       </div>

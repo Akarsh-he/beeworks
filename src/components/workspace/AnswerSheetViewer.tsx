@@ -45,49 +45,52 @@ export const AnswerSheetViewer: React.FC<AnswerSheetViewerProps> = ({
   return (
     <div className="flex flex-col h-full bg-slate-900 text-slate-100 rounded-l-2xl overflow-hidden border-r border-slate-800">
       {/* Top Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-slate-950/90 border-b border-slate-800 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-2.5 bg-slate-950/90 border-b border-slate-800 text-xs shrink-0">
         {/* Student Navigation Controls */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-1 bg-slate-800 p-0.5 rounded-lg border border-slate-700">
             <button
               onClick={onPreviousStudent}
               disabled={currentIndex === 0}
-              className="p-1 text-slate-300 hover:text-white disabled:opacity-30 disabled:hover:text-slate-300 hover:bg-slate-700 rounded transition-colors"
+              className="p-2 text-slate-300 hover:text-white disabled:opacity-30 disabled:hover:text-slate-300 hover:bg-slate-700 rounded transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
               title="Previous Paper [Key: Left Arrow]"
+              aria-label="Previous Student Paper"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
-            <span className="px-2 font-semibold text-amber-400">
+            <span className="px-2 font-semibold text-amber-400 text-xs">
               {currentIndex + 1} of {totalStudents}
             </span>
             <button
               onClick={onNextStudent}
               disabled={currentIndex === totalStudents - 1}
-              className="p-1 text-slate-300 hover:text-white disabled:opacity-30 disabled:hover:text-slate-300 hover:bg-slate-700 rounded transition-colors"
+              className="p-2 text-slate-300 hover:text-white disabled:opacity-30 disabled:hover:text-slate-300 hover:bg-slate-700 rounded transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
               title="Next Paper [Key: Right Arrow]"
+              aria-label="Next Student Paper"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-5 h-5" />
             </button>
           </div>
 
-          <div className="hidden sm:flex flex-col">
-            <span className="font-bold text-slate-100 text-xs">{student.studentName}</span>
+          <div className="flex flex-col">
+            <span className="font-bold text-slate-100 text-xs truncate max-w-[120px] sm:max-w-[180px]">{student.studentName}</span>
             <span className="text-[10px] text-slate-400">Roll: {student.rollNumber}</span>
           </div>
         </div>
 
-        {/* Center: Toggle AI Highlights & Page Indicator */}
+        {/* Center: Toggle AI Highlights */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowAIOverlays(!showAIOverlays)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all min-h-[44px] ${
               showAIOverlays
                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
                 : 'bg-slate-800 text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>AI Step Highlights</span>
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span className="hidden sm:inline">AI Step Highlights</span>
+            <span className="sm:hidden">AI Highlights</span>
           </button>
         </div>
 
@@ -95,27 +98,30 @@ export const AnswerSheetViewer: React.FC<AnswerSheetViewerProps> = ({
         <div className="flex items-center gap-1">
           <button
             onClick={handleZoomOut}
-            className="p-1.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded transition-colors"
+            className="p-2 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
             title="Zoom Out"
+            aria-label="Zoom Out"
           >
-            <ZoomOut className="w-4 h-4" />
+            <ZoomOut className="w-5 h-5" />
           </button>
-          <span className="w-12 text-center text-[11px] font-mono text-slate-300">
+          <span className="w-10 text-center text-[11px] font-mono text-slate-300">
             {zoomLevel}%
           </span>
           <button
             onClick={handleZoomIn}
-            className="p-1.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded transition-colors"
+            className="p-2 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
             title="Zoom In"
+            aria-label="Zoom In"
           >
-            <ZoomIn className="w-4 h-4" />
+            <ZoomIn className="w-5 h-5" />
           </button>
           <button
             onClick={handleRotate}
-            className="p-1.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded transition-colors ml-1"
+            className="p-2 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center ml-1"
             title="Rotate Page"
+            aria-label="Rotate Page"
           >
-            <RotateCw className="w-4 h-4" />
+            <RotateCw className="w-5 h-5" />
           </button>
         </div>
       </div>

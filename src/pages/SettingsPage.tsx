@@ -99,7 +99,7 @@ export const SettingsPage: React.FC = () => {
               step="5"
               value={confidenceThreshold}
               onChange={e => setConfidenceThreshold(Number(e.target.value))}
-              className="w-full accent-amber-500 cursor-pointer"
+              className="w-full accent-amber-500 cursor-pointer min-h-[44px]"
             />
             <p className="text-[11px] text-slate-500 italic">
               Steps evaluated with AI confidence below {confidenceThreshold}% will be automatically flagged for teacher manual review.
@@ -132,7 +132,7 @@ export const SettingsPage: React.FC = () => {
             type="submit"
             variant="gold"
             size="lg"
-            className="font-bold text-slate-950 px-8"
+            className="w-full sm:w-auto font-bold text-slate-950 px-8 min-h-[44px]"
             leftIcon={savedSuccess ? <CheckCircle2 className="w-4 h-4 text-slate-950" /> : <Save className="w-4 h-4 text-slate-950" />}
           >
             {savedSuccess ? 'Settings Saved!' : 'Save Preferences'}

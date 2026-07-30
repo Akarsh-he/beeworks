@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles,
   CheckCircle2,
@@ -14,7 +14,9 @@ import {
   ChevronRight,
   Calculator,
   Globe,
-  FileCheck
+  FileCheck,
+  Menu,
+  X
 } from 'lucide-react';
 import { Logo } from '../components/ui/Logo';
 import { Button } from '../components/ui/Button';
@@ -23,6 +25,9 @@ import { trustSchoolLogos } from '../mock/mockData';
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
+
+  // Mobile Header State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Interactive ROI Calculator State
   const [studentCount, setStudentCount] = useState<number>(350);
@@ -39,6 +44,7 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <Logo size="md" />
 
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-700">
             <a href="#product" className="hover:text-slate-900 transition-colors">Product</a>
             <a href="#value-pillars" className="hover:text-slate-900 transition-colors">Why BeeWorks</a>
@@ -46,30 +52,95 @@ export const LandingPage: React.FC = () => {
             <Link to="/pricing" className="hover:text-slate-900 transition-colors">Pricing</Link>
           </nav>
 
+          {/* Action Buttons & Mobile Toggle */}
           <div className="flex items-center gap-3">
-            <Link to="/login">
-              <Button variant="ghost" size="md">Sign In</Button>
-            </Link>
-            <Link to="/signup">
-              <Button variant="gold" size="md" rightIcon={<ArrowRight className="w-4 h-4" />}>
-                Get Started
-              </Button>
-            </Link>
+            <div className="hidden sm:flex items-center gap-3">
+              <Link to="/login">
+                <Button variant="ghost" size="md">Sign In</Button>
+              </Link>
+              <Link to="/signup">
+                <Button variant="gold" size="md" rightIcon={<ArrowRight className="w-4 h-4" />}>
+                  Get Started
+                </Button>
+              </Link>
+            </div>
+
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"
+              aria-label="Toggle Mobile Menu"
+            >
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Header Menu Drawer */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="md:hidden bg-white border-b border-slate-200 overflow-hidden px-4 py-4 space-y-4"
+            >
+              <nav className="flex flex-col space-y-3 text-sm font-semibold text-slate-700">
+                <a
+                  href="#product"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="py-2 px-3 rounded-lg hover:bg-slate-50 min-h-[44px] flex items-center"
+                >
+                  Product
+                </a>
+                <a
+                  href="#value-pillars"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="py-2 px-3 rounded-lg hover:bg-slate-50 min-h-[44px] flex items-center"
+                >
+                  Why BeeWorks
+                </a>
+                <a
+                  href="#roi-calculator"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="py-2 px-3 rounded-lg hover:bg-slate-50 min-h-[44px] flex items-center"
+                >
+                  Time Saved
+                </a>
+                <Link
+                  to="/pricing"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="py-2 px-3 rounded-lg hover:bg-slate-50 min-h-[44px] flex items-center"
+                >
+                  Pricing
+                </Link>
+              </nav>
+
+              <div className="pt-3 border-t border-slate-100 flex flex-col gap-2.5">
+                <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
+                  <Button variant="outline" size="md" className="w-full">Sign In</Button>
+                </Link>
+                <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
+                  <Button variant="gold" size="md" className="w-full" rightIcon={<ArrowRight className="w-4 h-4" />}>
+                    Get Started
+                  </Button>
+                </Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-12 pb-20 lg:pt-20 lg:pb-28 bg-gradient-to-b from-white via-slate-50 to-slate-100">
+      <section className="relative overflow-hidden pt-8 pb-16 sm:pt-16 sm:pb-24 lg:pt-20 lg:pb-28 bg-gradient-to-b from-white via-slate-50 to-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto space-y-6">
             {/* Core Principle Badge */}
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs font-extrabold tracking-wide"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs font-extrabold tracking-wide"
             >
-              <Sparkles className="w-4 h-4 text-amber-500" />
+              <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
               <span>CORE PRINCIPLE: “AI assists. Teachers decide.”</span>
             </motion.div>
 
@@ -78,7 +149,7 @@ export const LandingPage: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.15]"
+              className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.15]"
             >
               Every minute a teacher saves is another minute invested in teaching.
             </motion.h1>
@@ -88,7 +159,7 @@ export const LandingPage: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-lg sm:text-xl text-slate-600 font-normal leading-relaxed"
+              className="text-base sm:text-xl text-slate-600 font-normal leading-relaxed"
             >
               BeeWorks empowers schools with intelligent automated step-marking for handwritten answer sheets—delivering fast, accurate evaluation while giving teachers full control to review, edit, and approve marks.
             </motion.p>
@@ -98,73 +169,59 @@ export const LandingPage: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
+              className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2"
             >
-              <Button
-                variant="gold"
-                size="lg"
-                className="w-full sm:w-auto font-extrabold text-base shadow-xl shadow-amber-500/25"
-                rightIcon={<ArrowRight className="w-5 h-5" />}
-                onClick={() => navigate('/dashboard')}
-              >
-                Book a Demo
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full sm:w-auto text-base"
-                leftIcon={<Play className="w-5 h-5 text-amber-500 fill-amber-500" />}
-                onClick={() => navigate('/evaluations/sheet-1')}
-              >
-                Watch Interactive Demo
-              </Button>
+              <Link to="/evaluations/sheet-1" className="w-full sm:w-auto">
+                <Button
+                  variant="gold"
+                  size="lg"
+                  className="w-full sm:w-auto px-8 font-extrabold text-slate-950 min-h-[48px]"
+                  leftIcon={<Sparkles className="w-5 h-5 text-slate-950" />}
+                >
+                  Try Live AI Workspace
+                </Button>
+              </Link>
+              <Link to="/rooms/create" className="w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full sm:w-auto px-8 font-bold min-h-[48px]"
+                  rightIcon={<ArrowRight className="w-4 h-4" />}
+                >
+                  Create Evaluation Room
+                </Button>
+              </Link>
             </motion.div>
-
-            {/* Key Metric Highlights */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-10 max-w-4xl mx-auto">
-              <div className="p-4 bg-white/80 rounded-xl border border-slate-200 text-center shadow-sm">
-                <div className="text-2xl font-black text-slate-900">2.4x</div>
-                <div className="text-xs text-slate-500 font-semibold mt-0.5">Evaluation Speed</div>
-              </div>
-              <div className="p-4 bg-white/80 rounded-xl border border-slate-200 text-center shadow-sm">
-                <div className="text-2xl font-black text-amber-500">93.6%</div>
-                <div className="text-xs text-slate-500 font-semibold mt-0.5">AI Step Accuracy</div>
-              </div>
-              <div className="p-4 bg-white/80 rounded-xl border border-slate-200 text-center shadow-sm">
-                <div className="text-2xl font-black text-slate-900">64h+</div>
-                <div className="text-xs text-slate-500 font-semibold mt-0.5">Saved Per Teacher/Mo</div>
-              </div>
-              <div className="p-4 bg-white/80 rounded-xl border border-slate-200 text-center shadow-sm">
-                <div className="text-2xl font-black text-emerald-600">100%</div>
-                <div className="text-xs text-slate-500 font-semibold mt-0.5">Teacher Override Control</div>
-              </div>
-            </div>
           </div>
 
-          {/* Interactive Workspace Teaser Mockup */}
+          {/* Live Interactive Workspace Preview Mockup */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="mt-14 max-w-5xl mx-auto rounded-2xl overflow-hidden border-2 border-slate-300 shadow-2xl bg-slate-900"
+            className="mt-12 sm:mt-16 max-w-5xl mx-auto rounded-2xl overflow-hidden shadow-2xl border border-slate-800 bg-slate-950"
           >
             <div className="bg-slate-950 px-4 py-3 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400">
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-rose-500 inline-block" />
                 <span className="w-3 h-3 rounded-full bg-amber-500 inline-block" />
                 <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block" />
-                <span className="ml-2 font-mono text-slate-300">BeeWorks AI Evaluation Workspace — Class 10 Mathematics</span>
+                <span className="ml-2 font-mono text-slate-300 truncate max-w-[200px] sm:max-w-none">
+                  BeeWorks AI Evaluation Workspace — Class 10 Mathematics
+                </span>
               </div>
-              <span className="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-bold">Live Interactive Workspace</span>
+              <span className="hidden sm:inline bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-bold">
+                Live Interactive Workspace
+              </span>
             </div>
             
-            <div className="p-6 bg-slate-900 text-slate-200 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-              <div className="bg-white text-slate-900 p-6 rounded-xl shadow-inner font-mono text-sm border border-slate-300">
-                <div className="text-xs text-slate-500 font-bold mb-2">STUDENT HANDWRITTEN PAPER (AARAV SHARMA)</div>
+            <div className="p-4 sm:p-6 bg-slate-900 text-slate-200 grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+              <div className="bg-white text-slate-900 p-4 sm:p-6 rounded-xl shadow-inner font-mono text-xs sm:text-sm border border-slate-300">
+                <div className="text-[10px] sm:text-xs text-slate-500 font-bold mb-2">STUDENT HANDWRITTEN PAPER (AARAV SHARMA)</div>
                 <div className="p-3 bg-amber-50/50 rounded border border-amber-300 text-blue-900 space-y-2">
                   <p className="font-bold">Q1. 2x² - 5x - 3 = 0</p>
                   <p>a = 2, b = -5, c = -3</p>
-                  <p>x = [ -(-5) ± √((-5)² - 4(2)(-3)) ] / (2*2)</p>
+                  <p className="break-all">x = [ -(-5) ± √((-5)² - 4(2)(-3)) ] / (2*2)</p>
                   <p className="text-emerald-700 font-bold">x = 3 or x = -1/2</p>
                 </div>
               </div>
@@ -189,7 +246,7 @@ export const LandingPage: React.FC = () => {
                 <Button
                   variant="gold"
                   size="md"
-                  className="w-full font-bold mt-2"
+                  className="w-full font-bold mt-2 min-h-[44px]"
                   onClick={() => navigate('/evaluations/sheet-1')}
                 >
                   Try AI Workspace Live
@@ -201,19 +258,19 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* Trust Bar Section */}
-      <section className="py-12 bg-white border-y border-slate-200">
+      <section className="py-10 sm:py-12 bg-white border-y border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-8">
+          <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-6 sm:mb-8">
             Trusted by Leading Educational Institutions & Schools
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-14">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 items-center">
             {trustSchoolLogos.map(school => (
-              <div key={school.name} className="flex items-center gap-2 text-slate-700 font-bold text-sm sm:text-base grayscale hover:grayscale-0 transition-all opacity-80 hover:opacity-100 cursor-pointer">
-                <div className="w-8 h-8 rounded-lg bg-slate-900 text-amber-400 flex items-center justify-center font-black text-xs">
+              <div key={school.name} className="flex items-center justify-center gap-2 text-slate-700 font-bold text-xs sm:text-sm grayscale hover:grayscale-0 transition-all opacity-80 hover:opacity-100 cursor-pointer">
+                <div className="w-8 h-8 rounded-lg bg-slate-900 text-amber-400 flex items-center justify-center font-black text-xs shrink-0">
                   {school.abbr}
                 </div>
-                <span>{school.name}</span>
+                <span className="truncate">{school.name}</span>
               </div>
             ))}
           </div>
@@ -221,18 +278,18 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* Value Pillars Section */}
-      <section id="value-pillars" className="py-20 bg-slate-50">
+      <section id="value-pillars" className="py-16 sm:py-20 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">
+          <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               Designed for School Academic Excellence
             </h2>
-            <p className="text-slate-600 mt-2 text-sm font-medium">
+            <p className="text-slate-600 mt-2 text-xs sm:text-sm font-medium">
               Built ground-up to streamline answer sheet grading without compromising pedagogical standards.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
             {/* Pillar 1 */}
             <Card hoverable className="space-y-3">
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
@@ -292,21 +349,23 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* Interactive Time Savings Calculator */}
-      <section id="roi-calculator" className="py-20 bg-white border-t border-slate-200">
+      <section id="roi-calculator" className="py-16 sm:py-20 bg-white border-t border-slate-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-slate-900 text-white rounded-3xl p-8 sm:p-12 shadow-2xl border border-slate-800 relative overflow-hidden">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-              <div>
-                <div className="inline-flex items-center gap-2 text-amber-400 text-xs font-extrabold uppercase tracking-widest mb-2">
-                  <Calculator className="w-4 h-4" />
-                  School ROI Estimator
+          <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-10 lg:p-12 shadow-2xl border border-slate-800 relative overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              <div className="lg:col-span-7 space-y-6">
+                <div>
+                  <div className="inline-flex items-center gap-2 text-amber-400 text-xs font-extrabold uppercase tracking-widest mb-2">
+                    <Calculator className="w-4 h-4" />
+                    School ROI Estimator
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl font-black tracking-tight mb-2">
+                    Calculate Your School's Time Savings
+                  </h3>
+                  <p className="text-slate-400 text-xs sm:text-sm">
+                    See how much time BeeWorks returns to your teaching staff every month.
+                  </p>
                 </div>
-                <h3 className="text-2xl sm:text-3xl font-black tracking-tight mb-4">
-                  Calculate Your School's Time Savings
-                </h3>
-                <p className="text-slate-400 text-sm mb-6">
-                  See how much time BeeWorks returns to your teaching staff every month.
-                </p>
 
                 <div className="space-y-6">
                   <div>
@@ -321,7 +380,7 @@ export const LandingPage: React.FC = () => {
                       step="50"
                       value={studentCount}
                       onChange={e => setStudentCount(Number(e.target.value))}
-                      className="w-full accent-amber-500 cursor-pointer"
+                      className="w-full accent-amber-500 cursor-pointer min-h-[44px]"
                     />
                   </div>
 
@@ -337,36 +396,36 @@ export const LandingPage: React.FC = () => {
                       step="1"
                       value={examsPerMonth}
                       onChange={e => setExamsPerMonth(Number(e.target.value))}
-                      className="w-full accent-amber-500 cursor-pointer"
+                      className="w-full accent-amber-500 cursor-pointer min-h-[44px]"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Calculator Output */}
-              <div className="bg-slate-800/90 rounded-2xl p-6 border border-slate-700 text-center space-y-6">
+              <div className="lg:col-span-5 bg-slate-800/90 rounded-2xl p-6 border border-slate-700 text-center space-y-6">
                 <div>
                   <span className="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-1">
                     Total Hours Saved Per Month
                   </span>
-                  <span className="text-5xl font-black text-amber-400">{hoursSavedPerMonth} hrs</span>
+                  <span className="text-4xl sm:text-5xl font-black text-amber-400">{hoursSavedPerMonth} hrs</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-700">
                   <div>
-                    <span className="text-xl font-extrabold text-white">{teacherDaysSaved} Days</span>
-                    <span className="text-[11px] text-slate-400 block font-medium">Teaching Days Saved</span>
+                    <span className="text-lg sm:text-xl font-extrabold text-white">{teacherDaysSaved} Days</span>
+                    <span className="text-[10px] sm:text-[11px] text-slate-400 block font-medium">Teaching Days Saved</span>
                   </div>
                   <div>
-                    <span className="text-xl font-extrabold text-emerald-400">2.4x</span>
-                    <span className="text-[11px] text-slate-400 block font-medium">Speedup Multiplier</span>
+                    <span className="text-lg sm:text-xl font-extrabold text-emerald-400">2.4x</span>
+                    <span className="text-[10px] sm:text-[11px] text-slate-400 block font-medium">Speedup Multiplier</span>
                   </div>
                 </div>
 
                 <Button
                   variant="gold"
                   size="md"
-                  className="w-full font-bold"
+                  className="w-full font-bold min-h-[44px]"
                   onClick={() => navigate('/pricing')}
                 >
                   View Pricing Plans
@@ -379,8 +438,8 @@ export const LandingPage: React.FC = () => {
 
       {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 py-12 border-t border-slate-800 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
-          <div className="col-span-2 space-y-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+          <div className="sm:col-span-2 space-y-4">
             <Logo variant="light" size="md" />
             <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
               BeeWorks is the premier AI-powered handwritten answer sheet evaluation platform for K-12 schools and educational institutions.
@@ -417,9 +476,9 @@ export const LandingPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-800 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-800 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
           <p>© 2026 BeeWorks AI Platform. All rights reserved. “AI assists. Teachers decide.”</p>
-          <div className="flex gap-4 mt-4 sm:mt-0">
+          <div className="flex gap-4">
             <a href="#" className="hover:text-slate-300">Privacy Policy</a>
             <a href="#" className="hover:text-slate-300">Terms of Service</a>
             <a href="#" className="hover:text-slate-300">Security</a>

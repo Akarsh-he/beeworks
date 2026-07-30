@@ -90,9 +90,9 @@ export const EvaluationWorkspacePage: React.FC = () => {
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col md:flex-row overflow-hidden bg-slate-900">
+    <div className="min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden bg-slate-900">
       {/* Left Column: Student Answer Sheet PDF/Canvas Viewer */}
-      <div className="w-full md:w-3/5 lg:w-3/5 h-full">
+      <div className="w-full lg:w-3/5 h-[500px] sm:h-[600px] lg:h-full shrink-0 lg:shrink flex flex-col">
         <AnswerSheetViewer
           student={currentStudent}
           selectedStepId={selectedStepId}
@@ -105,7 +105,7 @@ export const EvaluationWorkspacePage: React.FC = () => {
       </div>
 
       {/* Right Column: AI Step-Marking & Review Panel */}
-      <div className="w-full md:w-2/5 lg:w-2/5 h-full border-l border-slate-200">
+      <div className="w-full lg:w-2/5 min-h-[500px] lg:h-full border-t lg:border-t-0 lg:border-l border-slate-800 shrink-0 lg:shrink flex flex-col">
         <StepMarkingPanel
           student={currentStudent}
           selectedStepId={selectedStepId}

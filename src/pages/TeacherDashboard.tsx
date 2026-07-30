@@ -82,7 +82,7 @@ export const TeacherDashboard: React.FC = () => {
         </div>
 
         {/* Quick Stats Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-slate-800">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8 pt-6 border-t border-slate-800">
           <div className="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Rooms</span>
             <span className="text-2xl font-black text-white mt-1 block">{teacherStats.totalRooms}</span>
