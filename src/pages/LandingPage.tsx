@@ -381,7 +381,7 @@ export const LandingPage: React.FC = () => {
       <footer className="bg-slate-900 text-slate-400 py-12 border-t border-slate-800 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           <div className="col-span-2 space-y-4">
-            <Logo size="md" lightText />
+            <Logo variant="light" size="md" />
             <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
               BeeWorks is the premier AI-powered handwritten answer sheet evaluation platform for K-12 schools and educational institutions.
             </p>

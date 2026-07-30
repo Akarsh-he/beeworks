@@ -43,7 +43,7 @@ export const LoginPage: React.FC = () => {
         </div>
 
         <div>
-          <Logo size="lg" lightText />
+          <Logo variant="light" size="lg" />
         </div>
 
         {/* Hero Visual Teaser */}
@@ -83,7 +83,7 @@ export const LoginPage: React.FC = () => {
         <div className="max-w-md w-full mx-auto space-y-8">
           <div className="flex items-center justify-between">
             <Link to="/">
-              <Logo size="md" />
+              <Logo variant="dark" size="md" />
             </Link>
 
             {/* Language Selector */}

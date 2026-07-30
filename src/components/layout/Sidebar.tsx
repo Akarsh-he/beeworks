@@ -12,6 +12,7 @@ import {
   BookOpen,
   ChevronRight
 } from 'lucide-react';
+import { Logo } from '../common/Logo';
 import { useApp } from '../../context/AppContext';
 
 export const Sidebar: React.FC = () => {
@@ -68,6 +69,13 @@ export const Sidebar: React.FC = () => {
   return (
     <aside className="w-64 bg-slate-900 text-slate-300 min-h-[calc(100vh-4rem)] flex flex-col justify-between p-4 shrink-0 border-r border-slate-800">
       <div>
+        {/* Prominent Sidebar Top Branding Logo */}
+        <div className="px-3 py-3 mb-4 border-b border-slate-800 flex items-center justify-between">
+          <NavLink to="/dashboard" className="flex items-center">
+            <Logo variant="light" size="md" />
+          </NavLink>
+        </div>
+
         {/* Navigation Label */}
         <div className="px-3 mb-2 text-[10px] font-extrabold uppercase tracking-widest text-slate-500">
           Core Platform

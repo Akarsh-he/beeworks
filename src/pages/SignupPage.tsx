@@ -33,7 +33,7 @@ export const SignupPage: React.FC = () => {
       {/* Left Hero Banner */}
       <div className="hidden lg:flex w-1/2 bg-slate-900 text-white p-12 flex-col justify-between relative overflow-hidden">
         <div>
-          <Logo size="lg" lightText />
+          <Logo variant="light" size="lg" />
         </div>
 
         <div className="space-y-6 max-w-lg relative z-10">
@@ -62,7 +62,7 @@ export const SignupPage: React.FC = () => {
       <div className="flex-1 flex flex-col justify-center px-6 sm:px-12 lg:px-20 bg-white py-12">
         <div className="max-w-md w-full mx-auto space-y-6">
           <Link to="/">
-            <Logo size="md" />
+            <Logo variant="dark" size="md" />
           </Link>
 
           <div>

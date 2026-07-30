@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" fill="none">
+  <!-- Bee 'B' Icon -->
+  <g transform="translate(10, 10)">
+    <!-- Outer 'B' Silhouette -->
+    <path d="M 15 10 L 45 10 C 65 10 78 22 78 38 C 78 48 70 56 60 59 C 73 63 82 72 82 86 C 82 102 68 114 45 114 L 15 114 Z" fill="#0F172A"/>
+    <!-- Top Yellow Wing Petal -->
+    <path d="M 28 26 C 42 22 62 30 58 46 C 42 50 26 38 28 26 Z" fill="#F59E0B"/>
+    <!-- Bottom Yellow Wing Petal -->
+    <path d="M 28 72 C 42 66 62 74 58 92 C 42 96 26 84 28 72 Z" fill="#F59E0B"/>
+  </g>
+
+  <!-- Typography: BeeWorks -->
+  <g transform="translate(110, 80)">
+    <!-- 'Bee' -->
+    <text font-family="Inter, system-ui, sans-serif" font-size="58" font-weight="800" fill="#0F172A" letter-spacing="-1">Bee</text>
+    <!-- 'Works' with Accent -->
+    <text x="110" font-family="Inter, system-ui, sans-serif" font-size="58" font-weight="800" fill="#0F172A" letter-spacing="-1">Works</text>
+    <!-- Yellow Accent stroke on 'W' -->
+    <polygon points="112,-48 126,-20 134,-25 120,-52" fill="#F59E0B"/>
+  </g>
+</svg>
