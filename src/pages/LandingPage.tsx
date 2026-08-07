@@ -21,6 +21,7 @@ import {
 import { Logo } from '../components/ui/Logo';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { PixelDriftText } from '../components/ui/PixelDriftText';
 import { trustSchoolLogos } from '../mock/mockData';
 
 export const LandingPage: React.FC = () => {
@@ -145,14 +146,10 @@ export const LandingPage: React.FC = () => {
             </motion.div>
 
             {/* Headline */}
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.15]"
-            >
-              Every minute a teacher saves is another minute invested in teaching.
-            </motion.h1>
+            <PixelDriftText
+              text="Every minute a teacher saves is another minute invested in teaching."
+              className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.15] justify-center"
+            />
 
             {/* Subtitle */}
             <motion.p

@@ -8,16 +8,17 @@ import {
   Building2,
   CreditCard,
   Settings,
-  HelpCircle,
   BookOpen,
   ChevronRight
 } from 'lucide-react';
-import { Logo } from '../common/Logo';
+import { Logo } from '../ui/Logo';
 import { useApp } from '../../context/AppContext';
 
 export const Sidebar: React.FC = () => {
-  const { user } = useApp();
+  const { user, rooms } = useApp();
   const location = useLocation();
+
+  const firstSheetId = rooms[0]?.students[0]?.id || rooms[0]?.id || 'workspace';
 
   const navItems = [
     {
@@ -34,7 +35,7 @@ export const Sidebar: React.FC = () => {
     },
     {
       name: 'AI Workspace',
-      path: '/evaluations/sheet-1',
+      path: `/evaluations/${firstSheetId}`,
       icon: Sparkles,
       highlight: true,
       roles: ['Teacher', 'School Admin']
@@ -69,14 +70,12 @@ export const Sidebar: React.FC = () => {
   return (
     <aside className="hidden lg:flex w-64 bg-slate-900 text-slate-300 min-h-[calc(100vh-4rem)] flex-col justify-between p-4 shrink-0 border-r border-slate-800">
       <div>
-        {/* Prominent Sidebar Top Branding Logo */}
         <div className="px-3 py-3 mb-4 border-b border-slate-800 flex items-center justify-between">
           <NavLink to="/dashboard" className="flex items-center">
             <Logo variant="light" size="md" />
           </NavLink>
         </div>
 
-        {/* Navigation Label */}
         <div className="px-3 mb-2 text-[10px] font-extrabold uppercase tracking-widest text-slate-500">
           Core Platform
         </div>
@@ -88,7 +87,7 @@ export const Sidebar: React.FC = () => {
 
             return (
               <NavLink
-                key={item.path}
+                key={item.name}
                 to={item.path}
                 className={({ isActive: linkActive }) => {
                   const active = linkActive || (item.path.startsWith('/evaluations') && location.pathname.startsWith('/evaluations'));
@@ -117,7 +116,6 @@ export const Sidebar: React.FC = () => {
         </nav>
       </div>
 
-      {/* Footer Banner in Sidebar */}
       <div className="mt-8 pt-4 border-t border-slate-800">
         <div className="bg-slate-800/80 rounded-xl p-3 border border-slate-700/80 text-left">
           <div className="flex items-center gap-2 mb-1.5 text-amber-400 text-xs font-bold">
@@ -128,7 +126,7 @@ export const Sidebar: React.FC = () => {
             “AI assists. Teachers decide.”
           </p>
           <div className="mt-2 text-[10px] text-slate-500 font-sans font-medium flex items-center justify-between">
-            <span>BeeWorks v2.4</span>
+            <span>{user.schoolName}</span>
             <span className="text-emerald-400">● Live</span>
           </div>
         </div>

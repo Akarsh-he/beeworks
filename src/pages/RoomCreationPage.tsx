@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { api } from '../services/api';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
@@ -13,31 +14,32 @@ import {
   CheckCircle2,
   X,
   Sparkles,
-  ArrowRight,
-  HelpCircle
+  ArrowRight
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export const RoomCreationPage: React.FC = () => {
   const navigate = useNavigate();
-  const { createRoom } = useApp();
+  const { createRoom, refreshData } = useApp();
 
-  // Form State
   const [className, setClassName] = useState<string>('Class 10');
   const [section, setSection] = useState<string>('A');
   const [examTitle, setExamTitle] = useState<string>('Mid Term Examination 2025');
   const [subject, setSubject] = useState<string>('Mathematics');
 
-  // File State
   const [questionPaperFile, setQuestionPaperFile] = useState<File | null>(null);
-  const [studentAnswerFiles, setStudentAnswerFiles] = useState<{ name: string; size: string }[]>([
-    { name: 'Maths_MidTerm_Class10A_BulkBatch1.pdf', size: '14.2 MB (32 Answer Sheets)' }
-  ]);
-
+  const [studentAnswerFiles, setStudentAnswerFiles] = useState<{ name: string; size: string; file?: File }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const handleQPFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setQuestionPaperFile(e.target.files[0]);
+      const file = e.target.files[0];
+      if (file.type !== 'application/pdf') {
+        toast.error('Question paper must be a PDF file. Please select a valid PDF.');
+        e.target.value = '';
+        return;
+      }
+      setQuestionPaperFile(file);
     }
   };
 
@@ -45,31 +47,62 @@ export const RoomCreationPage: React.FC = () => {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files).map(f => ({
         name: f.name,
-        size: `${(f.size / (1024 * 1024)).toFixed(1)} MB`
+        size: `${(f.size / (1024 * 1024)).toFixed(1)} MB`,
+        file: f,
       }));
       setStudentAnswerFiles(prev => [...prev, ...newFiles]);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
-    setTimeout(() => {
-      const qpName = questionPaperFile ? questionPaperFile.name : 'Maths Mid Term 2025 QP.pdf';
-      const newRoomId = createRoom({
+    try {
+      const qpName = questionPaperFile ? questionPaperFile.name : 'Maths_MidTerm_QP.pdf';
+      const newRoomId = await createRoom({
         roomName: `Room ${className.replace(/\s+/g, '')}${section} – ${subject}`,
         className,
         section,
         subject,
         examTitle,
         questionPaperName: qpName,
-        totalSheets: 32
+        totalSheets: studentAnswerFiles.length || 1,
+        questionPaperFile: questionPaperFile || undefined,
+        rubricText: `Standard Marking Rubric for ${subject} ${examTitle} (${className})`,
       });
 
+      // Upload each student answer sheet to the newly created room
+      if (studentAnswerFiles.length > 0) {
+        let uploaded = 0;
+        for (const sheet of studentAnswerFiles) {
+          if (!sheet.file) continue;
+          try {
+            const fd = new FormData();
+            // Derive student name from filename; ensure >= 2 chars for backend validation
+            let studentName = sheet.name.replace(/\.[^/.]+$/, '').replace(/[_\-]+/g, ' ').trim();
+            if (studentName.length < 2) studentName = `Student ${uploaded + 1}`;
+            fd.append('studentName', studentName);
+            fd.append('file', sheet.file);
+            await api.rooms.uploadAnswerSheet(newRoomId, fd);
+            uploaded++;
+          } catch (sheetErr: any) {
+            console.error(`Failed to upload ${sheet.name}:`, sheetErr);
+            toast.error(`Failed to upload ${sheet.name}: ${sheetErr?.response?.data?.message || sheetErr?.message || 'unknown error'}`);
+          }
+        }
+        if (uploaded > 0) {
+          toast.success(`${uploaded} answer sheet${uploaded > 1 ? 's' : ''} uploaded successfully!`);
+        }
+        // Re-fetch rooms so the dashboard shows the uploaded sheets immediately
+        await refreshData();
+      }
+
       setIsSubmitting(false);
-      navigate(`/evaluations/sheet-${newRoomId}-1`);
-    }, 800);
+      navigate('/dashboard');
+    } catch (error: any) {
+      toast.error('Error creating evaluation room.');
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -158,7 +191,6 @@ export const RoomCreationPage: React.FC = () => {
             <h2 className="text-base font-bold text-slate-900">Upload Examination Files</h2>
           </div>
 
-          {/* Upload 1: Question Paper */}
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-slate-800">
               1. Upload Question Paper (PDF)
@@ -185,7 +217,7 @@ export const RoomCreationPage: React.FC = () => {
               ) : (
                 <div className="space-y-2">
                   <UploadCloud className="w-8 h-8 text-slate-400 mx-auto" />
-                  <p className="text-xs font-bold text-slate-700">Maths Mid Term 2025 QP.pdf selected by default</p>
+                  <p className="text-xs font-bold text-slate-700">Select Question Paper PDF</p>
                   <label className="inline-block">
                     <span className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 shadow-sm cursor-pointer hover:bg-slate-50">
                       Choose Question Paper PDF
@@ -202,7 +234,6 @@ export const RoomCreationPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Upload 2: Student Answer Sheets */}
           <div className="space-y-2 pt-2">
             <label className="block text-sm font-semibold text-slate-800">
               2. Upload Student Answer Sheets (Bulk or Individual PDFs)
@@ -232,7 +263,6 @@ export const RoomCreationPage: React.FC = () => {
                 </label>
               </div>
 
-              {/* Uploaded Files List */}
               {studentAnswerFiles.length > 0 && (
                 <div className="mt-4 pt-4 border-t border-slate-200 text-left space-y-2">
                   <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">

@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Logo } from '../ui/Logo';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { MobileNav } from './MobileNav';
 import {
   Bell,
-  User,
   ChevronDown,
   Sparkles,
   GraduationCap,
@@ -20,6 +20,7 @@ import { Badge } from '../ui/Badge';
 
 export const Navbar: React.FC = () => {
   const { user, autoSaveStatus, switchRole } = useApp();
+  const { logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -30,12 +31,21 @@ export const Navbar: React.FC = () => {
 
   if (isAuthOrLanding) return null;
 
+  const initials = user?.name
+    ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : 'ED';
+
+  const handleSignOut = async () => {
+    setShowUserDropdown(false);
+    await logout();
+    navigate('/login');
+  };
+
   return (
     <>
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Left: Hamburger Toggle (Mobile/Tablet) & Brand Logo */}
             <div className="flex items-center gap-3 sm:gap-4">
               <button
                 onClick={() => setIsMobileNavOpen(true)}
@@ -49,7 +59,6 @@ export const Navbar: React.FC = () => {
                 <Logo size="sm" />
               </Link>
 
-              {/* Auto-save Status Indicator */}
               <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-slate-100/80 rounded-full text-xs font-medium text-slate-600 border border-slate-200/60">
                 {autoSaveStatus === 'Saving' ? (
                   <>
@@ -66,7 +75,6 @@ export const Navbar: React.FC = () => {
               </div>
             </div>
 
-            {/* Center: Quick Actions (Desktop/Laptop) */}
             <div className="hidden md:flex items-center gap-3">
               <Button
                 variant="gold"
@@ -80,15 +88,13 @@ export const Navbar: React.FC = () => {
                 variant="outline"
                 size="sm"
                 leftIcon={<Sparkles className="w-4 h-4 text-amber-500" />}
-                onClick={() => navigate('/evaluations/sheet-1')}
+                onClick={() => navigate('/dashboard')}
               >
-                Open AI Workspace
+                Open Dashboard
               </Button>
             </div>
 
-            {/* Right: Role Switcher & User Profile */}
             <div className="flex items-center gap-2 sm:gap-3">
-              {/* Role Switcher Pill for Easy Evaluation & Demo Testing */}
               <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs font-medium">
                 <button
                   onClick={() => switchRole('Teacher')}
@@ -112,7 +118,6 @@ export const Navbar: React.FC = () => {
                 </button>
               </div>
 
-              {/* Notifications Popover Toggle */}
               <div className="relative">
                 <button
                   onClick={() => {
@@ -132,19 +137,13 @@ export const Navbar: React.FC = () => {
                     <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                       <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Notifications</h4>
                       <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">
-                        2 Unread
+                        Live Sync
                       </span>
                     </div>
                     <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
                       <div className="py-2.5 text-xs">
-                        <p className="font-semibold text-slate-900">Room 101 AI Evaluation Ready</p>
-                        <p className="text-slate-500 mt-0.5">32 student papers processed with step breakdown.</p>
-                        <span className="text-[10px] text-slate-400 mt-1 block">5 mins ago</span>
-                      </div>
-                      <div className="py-2.5 text-xs">
-                        <p className="font-semibold text-slate-900">Review Required: Diya Patel</p>
-                        <p className="text-slate-500 mt-0.5">Discriminant sign step requires teacher confirmation.</p>
-                        <span className="text-[10px] text-slate-400 mt-1 block">15 mins ago</span>
+                        <p className="font-semibold text-slate-900">Gemini 2.5 Pro AI Ready</p>
+                        <p className="text-slate-500 mt-0.5">Evaluation pipeline active for answer sheet processing.</p>
                       </div>
                     </div>
                   </div>
@@ -161,8 +160,8 @@ export const Navbar: React.FC = () => {
                   className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100 min-h-[44px] transition-colors"
                   aria-label="User menu"
                 >
-                  <div className="w-8 h-8 rounded-full bg-slate-900 text-amber-400 flex items-center justify-center font-bold text-sm border border-amber-500/30 shrink-0">
-                    {user.name.split(' ').map(n => n[0]).join('')}
+                  <div className="w-8 h-8 rounded-full bg-slate-900 text-amber-400 flex items-center justify-center font-bold text-xs border border-amber-500/30 shrink-0">
+                    {initials}
                   </div>
                   <div className="hidden sm:flex flex-col text-left">
                     <span className="text-xs font-bold text-slate-900">{user.name}</span>
@@ -204,10 +203,7 @@ export const Navbar: React.FC = () => {
                     </div>
                     <div className="border-t border-slate-100 pt-1">
                       <button
-                        onClick={() => {
-                          setShowUserDropdown(false);
-                          navigate('/login');
-                        }}
+                        onClick={handleSignOut}
                         className="w-full px-4 py-2.5 text-left text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 font-medium min-h-[44px]"
                       >
                         <LogOut className="w-4 h-4 text-rose-500" />
@@ -222,7 +218,6 @@ export const Navbar: React.FC = () => {
         </div>
       </header>
 
-      {/* Mobile Slide-out Drawer */}
       <MobileNav isOpen={isMobileNavOpen} onClose={() => setIsMobileNavOpen(false)} />
     </>
   );

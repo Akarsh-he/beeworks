@@ -5,27 +5,32 @@ import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
 import { Sparkles, Mail, Lock, User, Building2, ArrowRight } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 
 export const SignupPage: React.FC = () => {
   const navigate = useNavigate();
-  const { setUser } = useApp();
+  const { register } = useAuth();
 
   const [fullName, setFullName] = useState('Priya Sharma');
   const [schoolName, setSchoolName] = useState('Delhi Public School, R.K. Puram');
   const [email, setEmail] = useState('priya.sharma@dps.edu.in');
-  const [role, setRole] = useState<'Teacher' | 'School Admin'>('Teacher');
+  const [password, setPassword] = useState('password123');
+  const [role, setRole] = useState<'TEACHER' | 'ADMIN'>('TEACHER');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    setUser(prev => ({
-      ...prev,
-      name: fullName,
+    setIsLoading(true);
+    const success = await register({
       email,
-      schoolName,
-      role
-    }));
-    navigate('/dashboard');
+      password,
+      name: fullName,
+      role,
+    });
+    setIsLoading(false);
+    if (success) {
+      navigate('/dashboard');
+    }
   };
 
   return (
@@ -103,11 +108,21 @@ export const SignupPage: React.FC = () => {
               required
             />
 
+            <Input
+              label="Password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              leftIcon={<Lock className="w-4 h-4 text-slate-400" />}
+              required
+            />
+
             <Select
               label="Select Role"
               options={[
-                { value: 'Teacher', label: 'Teacher / Educator' },
-                { value: 'School Admin', label: 'School Admin / Principal' },
+                { value: 'TEACHER', label: 'Teacher / Educator' },
+                { value: 'ADMIN', label: 'School Admin / Principal' },
               ]}
               value={role}
               onChange={e => setRole(e.target.value as any)}
@@ -118,6 +133,7 @@ export const SignupPage: React.FC = () => {
               variant="gold"
               size="lg"
               className="w-full font-extrabold text-slate-950 shadow-lg shadow-amber-500/20"
+              isLoading={isLoading}
               rightIcon={<ArrowRight className="w-4 h-4" />}
             >
               Get Started Free

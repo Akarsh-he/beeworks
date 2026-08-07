@@ -2,65 +2,147 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
 import { Table, TableHeader, TableRow, TableCell, TableHeadCell } from '../components/ui/Table';
-import { CheckCircle2, Sparkles, HelpCircle, ArrowRight, Zap, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Sparkles } from 'lucide-react';
+import { api } from '../services/api';
+import { toast } from 'sonner';
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 export const PricingPage: React.FC = () => {
   const navigate = useNavigate();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  const loadRazorpayScript = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handleSubscribe = async (planId: string, planName: string) => {
+    try {
+      setLoadingPlan(planId);
+      toast.info(`Initiating Razorpay subscription for ${planName}...`);
+
+      const res = await api.payments.subscribe(planId);
+      if (!res.success || !res.subscription) {
+        throw new Error(res.message || 'Failed to create subscription order');
+      }
+
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded || !window.Razorpay) {
+        toast.success(`Subscription created successfully! ID: ${res.subscription.id}`);
+        setLoadingPlan(null);
+        return;
+      }
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_mockkeyid123',
+        subscription_id: res.subscription.id,
+        name: 'BeeWorks AI Platform',
+        description: `Subscription for ${planName}`,
+        handler: async function (response: any) {
+          try {
+            toast.info('Verifying payment signature with backend...');
+            const verifyRes = await api.payments.verify({
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_subscription_id: response.razorpay_subscription_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+
+            if (verifyRes.success) {
+              toast.success('Subscription activated successfully! Welcome to BeeWorks Pro.');
+              navigate('/dashboard');
+            }
+          } catch (e: any) {
+            toast.error(e.response?.data?.message || 'Payment signature verification failed.');
+          }
+        },
+        prefill: {
+          name: 'Teacher',
+          email: 'teacher@school.edu.in',
+        },
+        theme: {
+          color: '#f59e0b',
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error: any) {
+      toast.error(error.message || 'Payment initiation error.');
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
 
   const plans = [
     {
-      name: "Starter / Individual",
-      priceMonthly: "$15",
-      priceAnnual: "$12",
-      copiesLimit: "100 copies / month",
-      description: "Ideal for individual teachers trying AI-assisted step evaluation.",
+      id: 'plan_starter_sub',
+      name: 'Starter / Individual',
+      priceMonthly: '₹999',
+      priceAnnual: '₹799',
+      copiesLimit: '100 copies / month',
+      description: 'Ideal for individual teachers trying AI-assisted step evaluation.',
       features: [
-        "100 handwritten copies / month",
-        "Step-by-step math evaluation",
-        "Manual mark overrides & notes",
-        "Export to CSV & PDF",
-        "Standard Email Support",
+        '100 handwritten copies / month',
+        'Step-by-step math evaluation',
+        'Manual mark overrides & notes',
+        'Export to CSV & PDF',
+        'Standard Email Support',
       ],
-      cta: "Start Free Trial",
-      highlight: false
+      cta: 'Start Free Trial',
+      highlight: false,
     },
     {
-      name: "Professional Teacher",
-      priceMonthly: "$29",
-      priceAnnual: "$24",
-      copiesLimit: "1,000 copies / month",
-      description: "Best for active subject teachers managing multiple class sections.",
+      id: 'plan_pro_sub',
+      name: 'Professional Teacher',
+      priceMonthly: '₹1,999',
+      priceAnnual: '₹1,599',
+      copiesLimit: '1,000 copies / month',
+      description: 'Best for active subject teachers managing multiple class sections.',
       features: [
-        "1,000 handwritten copies / month",
-        "Advanced Math & Science step OCR",
-        "Instant Gradebook Integration",
-        "Unlimited Room Creations",
-        "Priority 24/7 Teacher Support",
-        "AI Accuracy Guarantee",
+        '1,000 handwritten copies / month',
+        'Advanced Math & Science step OCR',
+        'Instant Gradebook Integration',
+        'Unlimited Room Creations',
+        'Priority 24/7 Teacher Support',
+        'AI Accuracy Guarantee',
       ],
-      cta: "Get Started Now",
-      highlight: true
+      cta: 'Get Started Now',
+      highlight: true,
     },
     {
-      name: "Enterprise / School-Wide",
-      priceMonthly: "Custom",
-      priceAnnual: "Custom",
-      copiesLimit: "Unlimited copies",
-      description: "For entire school departments, school chains & districts.",
+      id: 'plan_enterprise_sub',
+      name: 'Enterprise / School-Wide',
+      priceMonthly: 'Custom',
+      priceAnnual: 'Custom',
+      copiesLimit: 'Unlimited copies',
+      description: 'For entire school departments, school chains & districts.',
       features: [
-        "Unlimited copies across all grades",
-        "Dedicated School Admin Dashboard",
-        "Custom SIS & LMS Integrations",
-        "FERPA & Data Privacy Compliance",
-        "Dedicated Account Manager",
-        "On-Premise / Hybrid Deployment",
+        'Unlimited copies across all grades',
+        'Dedicated School Admin Dashboard',
+        'Custom SIS & LMS Integrations',
+        'FERPA & Data Privacy Compliance',
+        'Dedicated Account Manager',
+        'On-Premise / Hybrid Deployment',
       ],
-      cta: "Contact Sales / Book Demo",
-      highlight: false
-    }
+      cta: 'Contact Sales / Book Demo',
+      highlight: false,
+    },
   ];
 
   return (
@@ -84,7 +166,7 @@ export const PricingPage: React.FC = () => {
             Monthly Billing
           </span>
           <button
-            onClick={() => setBillingCycle(prev => prev === 'monthly' ? 'annual' : 'monthly')}
+            onClick={() => setBillingCycle((prev) => (prev === 'monthly' ? 'annual' : 'monthly'))}
             className="w-12 h-6 bg-slate-900 rounded-full p-1 transition-colors relative"
           >
             <div
@@ -104,7 +186,7 @@ export const PricingPage: React.FC = () => {
 
       {/* Pricing Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-        {plans.map(plan => (
+        {plans.map((plan) => (
           <Card
             key={plan.name}
             hoverable
@@ -139,15 +221,21 @@ export const PricingPage: React.FC = () => {
                 </span>
               </div>
 
-              <div className={`p-2.5 rounded-lg text-xs font-bold ${plan.highlight ? 'bg-slate-800 text-amber-300' : 'bg-slate-100 text-slate-700'}`}>
+              <div
+                className={`p-2.5 rounded-lg text-xs font-bold ${
+                  plan.highlight ? 'bg-slate-800 text-amber-300' : 'bg-slate-100 text-slate-700'
+                }`}
+              >
                 {plan.copiesLimit}
               </div>
 
               <ul className="space-y-3 text-xs">
-                {plan.features.map(feat => (
+                {plan.features.map((feat) => (
                   <li key={feat} className="flex items-center gap-2">
-                    <CheckCircle2 className={`w-4 h-4 shrink-0 ${plan.highlight ? 'text-amber-400' : 'text-emerald-600'}`} />
-                    <span>{feat}</span>
+                    <CheckCircle2
+                      className={`w-4 h-4 shrink-0 ${plan.highlight ? 'text-amber-400' : 'text-emerald-600'}`}
+                    />
+                    <span className={plan.highlight ? 'text-gray-950 font-medium' : ''}>{feat}</span>
                   </li>
                 ))}
               </ul>
@@ -158,7 +246,8 @@ export const PricingPage: React.FC = () => {
                 variant={plan.highlight ? 'gold' : 'primary'}
                 size="lg"
                 className="w-full font-bold"
-                onClick={() => navigate('/signup')}
+                isLoading={loadingPlan === plan.id}
+                onClick={() => handleSubscribe(plan.id, plan.name)}
               >
                 {plan.cta}
               </Button>
@@ -175,8 +264,8 @@ export const PricingPage: React.FC = () => {
           <TableHeader>
             <tr>
               <TableHeadCell>Platform Feature</TableHeadCell>
-              <TableHeadCell>Starter ($12/mo)</TableHeadCell>
-              <TableHeadCell>Professional ($24/mo)</TableHeadCell>
+              <TableHeadCell>Starter (₹799/mo)</TableHeadCell>
+              <TableHeadCell>Professional (₹1,599/mo)</TableHeadCell>
               <TableHeadCell>Enterprise (Custom)</TableHeadCell>
             </tr>
           </TableHeader>
@@ -190,7 +279,7 @@ export const PricingPage: React.FC = () => {
             <TableRow>
               <TableCell><span className="font-bold">Handwritten Math OCR Recognition</span></TableCell>
               <TableCell>Standard</TableCell>
-              <TableCell><span className="text-amber-600 font-bold">Advanced Neural OCR</span></TableCell>
+              <TableCell><span className="text-amber-600 font-bold">Gemini 2.5 Pro Multimodal</span></TableCell>
               <TableCell><span className="text-amber-600 font-bold">Custom Trained Models</span></TableCell>
             </TableRow>
             <TableRow>
@@ -198,12 +287,6 @@ export const PricingPage: React.FC = () => {
               <TableCell>✓ 100% Control</TableCell>
               <TableCell>✓ 100% Control</TableCell>
               <TableCell>✓ 100% Control</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell><span className="font-bold">Gradebook Export</span></TableCell>
-              <TableCell>CSV & PDF</TableCell>
-              <TableCell>CSV, PDF, Excel & Google</TableCell>
-              <TableCell>Direct SIS API Sync</TableCell>
             </TableRow>
             <TableRow>
               <TableCell><span className="font-bold">Support SLA</span></TableCell>

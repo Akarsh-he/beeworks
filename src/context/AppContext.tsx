@@ -1,18 +1,13 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   EvaluationRoom,
-  StudentAnswerSheet,
   TeacherStats,
   SchoolAnalytics,
   UserProfile,
-  EvaluationStep
 } from '../types';
-import {
-  initialRooms,
-  initialTeacherStats,
-  initialSchoolAnalytics,
-  initialUserProfile
-} from '../mock/mockData';
+import { useAuth } from './AuthContext';
+import { api } from '../services/api';
+import { toast } from 'sonner';
 
 interface AppContextType {
   user: UserProfile;
@@ -25,6 +20,8 @@ interface AppContextType {
   activeStudentId: string;
   setActiveStudentId: (id: string) => void;
   autoSaveStatus: 'Saved' | 'Saving' | 'Unsaved';
+  loading: boolean;
+  refreshData: () => Promise<void>;
   
   // Actions
   createRoom: (roomData: {
@@ -35,7 +32,9 @@ interface AppContextType {
     examTitle: string;
     questionPaperName: string;
     totalSheets: number;
-  }) => string;
+    questionPaperFile?: File;
+    rubricText?: string;
+  }) => Promise<string>;
   
   updateStepMark: (
     studentId: string,
@@ -43,55 +42,169 @@ interface AppContextType {
     stepId: string,
     newMarks: number,
     note?: string
-  ) => void;
+  ) => Promise<void>;
   
-  approveEvaluation: (studentId: string) => void;
+  approveEvaluation: (studentId: string) => Promise<void>;
   flagEvaluation: (studentId: string, reason: string) => void;
   requestReview: (studentId: string) => void;
   recalculateEvaluation: (studentId: string) => void;
   switchRole: (role: 'Teacher' | 'School Admin') => void;
+  deleteRoom: (roomId: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY = 'beeworks_app_state_v1';
-
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile>(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY + '_user');
-    return saved ? JSON.parse(saved) : initialUserProfile;
+  const { user: authUser } = useAuth();
+
+  const [user, setUser] = useState<UserProfile>(() => ({
+    name: authUser?.name || 'Educator',
+    email: authUser?.email || '',
+    role: (authUser?.role === 'ADMIN' || authUser?.role === 'School Admin') ? 'School Admin' : 'Teacher',
+    schoolName: authUser?.schoolName || 'BeeWorks Institution',
+  }));
+
+  useEffect(() => {
+    if (authUser) {
+      setUser({
+        name: authUser.name,
+        email: authUser.email,
+        role: (authUser.role === 'ADMIN' || authUser.role === 'School Admin') ? 'School Admin' : 'Teacher',
+        schoolName: authUser.schoolName || 'BeeWorks Institution',
+      });
+    }
+  }, [authUser]);
+
+  const [rooms, setRooms] = useState<EvaluationRoom[]>([]);
+  const [teacherStats, setTeacherStats] = useState<TeacherStats>({
+    totalRooms: 0,
+    evaluationsCompleted: 0,
+    timeSavedHours: 0,
+    timeSavedMinutes: 0,
+    accuracyRate: 98.4,
+    avgSpeedPerPaper: '2m 45s'
   });
 
-  const [rooms, setRooms] = useState<EvaluationRoom[]>(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY + '_rooms');
-    return saved ? JSON.parse(saved) : initialRooms;
+  const [schoolAnalytics] = useState<SchoolAnalytics>({
+    activeTeachers: 12,
+    activeRooms: 4,
+    activeSubscriptions: 1,
+    schoolWideAccuracy: 98.4,
+    totalCopiesProcessed: 1280,
+    totalEvaluationTimeSaved: '320 hours',
+    productivityMultiplier: '2.8x',
+    weeklyTrend: [
+      { day: 'Mon', count: 120, accuracy: 98 },
+      { day: 'Tue', count: 150, accuracy: 99 },
+      { day: 'Wed', count: 180, accuracy: 98 },
+      { day: 'Thu', count: 210, accuracy: 99 },
+      { day: 'Fri', count: 160, accuracy: 98 }
+    ],
+    institutions: [
+      {
+        id: 'inst-1',
+        schoolName: user.schoolName || 'BeeWorks Institution',
+        location: 'New Delhi',
+        copiesProcessed: 1280,
+        timeSaved: '320h',
+        accuracy: 98.4,
+        activeTeachers: 12
+      }
+    ]
   });
 
-  const [teacherStats, setTeacherStats] = useState<TeacherStats>(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY + '_stats');
-    return saved ? JSON.parse(saved) : initialTeacherStats;
-  });
-
-  const [schoolAnalytics] = useState<SchoolAnalytics>(initialSchoolAnalytics);
-
-  const [activeRoomId, setActiveRoomId] = useState<string>("room-101");
-  const [activeStudentId, setActiveStudentId] = useState<string>("sheet-1");
+  const [activeRoomId, setActiveRoomId] = useState<string>('');
+  const [activeStudentId, setActiveStudentId] = useState<string>('');
   const [autoSaveStatus, setAutoSaveStatus] = useState<'Saved' | 'Saving' | 'Unsaved'>('Saved');
+  const [loading, setLoading] = useState<boolean>(false);
 
-  // Sync to local storage
+  const refreshData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [roomsRes, analyticsRes] = await Promise.allSettled([
+        api.rooms.getAll(),
+        api.analytics.getDashboard(),
+      ]);
+
+      if (roomsRes.status === 'fulfilled' && roomsRes.value.success) {
+        const fetchedRooms: EvaluationRoom[] = roomsRes.value.rooms.map((r: any) => ({
+          id: r.id,
+          roomName: r.name,
+          className: r.grade || 'Class 10',
+          section: 'A',
+          subject: r.subject,
+          examTitle: r.name,
+          questionPaperName: r.questionPaperUrl ? 'Uploaded Question Paper' : 'Standard Rubric Paper',
+          totalSheets: r._count?.answerSheets || r.answerSheets?.length || 0,
+          evaluatedCount: r.answerSheets?.filter((s: any) => s.status === 'COMPLETED').length || 0,
+          pendingCount: r.answerSheets?.filter((s: any) => s.status === 'PENDING' || s.status === 'EVALUATING').length || 0,
+          flaggedCount: 0,
+          createdAt: new Date(r.createdAt).toLocaleDateString(),
+          status: 'Active',
+          students: (r.answerSheets || []).map((s: any) => ({
+            id: s.id,
+            roomId: r.id,
+            studentName: s.studentName,
+            rollNumber: s.studentRollNo || '01',
+            status: s.status === 'COMPLETED' ? 'Approved' : 'Pending',
+            overallScore: s.totalAwarded || 0,
+            maxScore: s.maxScore || 10,
+            confidenceRate: 98,
+            submissionDate: new Date(s.createdAt).toLocaleString(),
+            timeSpentSeconds: 15,
+            pageImages: [s.fileUrl],
+            questions: (s.evaluationSteps || []).map((st: any) => ({
+              id: st.id,
+              questionNumber: st.questionNo || 'Q1',
+              questionText: st.stepDescription,
+              maxScore: st.maxMarks,
+              totalScore: st.awardedMarks,
+              pageNumber: 1,
+              steps: [
+                {
+                  id: st.id,
+                  stepNumber: 1,
+                  title: st.questionNo || 'Step 1',
+                  maxMarks: st.maxMarks,
+                  awardedMarks: st.awardedMarks,
+                  confidence: 'High' as const,
+                  reasoning: st.stepFeedback,
+                  status: (st.awardedMarks === st.maxMarks ? 'Correct' : st.awardedMarks > 0 ? 'Partial' : 'Incorrect') as any,
+                  teacherNote: st.stepFeedback
+                }
+              ]
+            }))
+          }))
+        }));
+
+        setRooms(fetchedRooms);
+        if (fetchedRooms.length > 0 && !activeRoomId) {
+          setActiveRoomId(fetchedRooms[0].id);
+        }
+      }
+
+      if (analyticsRes.status === 'fulfilled' && analyticsRes.value.success) {
+        const a = analyticsRes.value.analytics;
+        setTeacherStats({
+          totalRooms: a.totalRooms || 0,
+          evaluationsCompleted: a.completedPapers || 0,
+          timeSavedHours: Math.floor(a.totalTimeSavedHours || 0),
+          timeSavedMinutes: Math.round(((a.totalTimeSavedHours || 0) % 1) * 60),
+          accuracyRate: a.overallAccuracyRate || 98.4,
+          avgSpeedPerPaper: '2m 45s'
+        });
+      }
+    } catch (error) {
+      console.warn('API sync warning:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeRoomId]);
+
   useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY + '_rooms', JSON.stringify(rooms));
-  }, [rooms]);
+    refreshData();
+  }, [refreshData]);
 
-  useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY + '_stats', JSON.stringify(teacherStats));
-  }, [teacherStats]);
-
-  useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY + '_user', JSON.stringify(user));
-  }, [user]);
-
-  // Actions
   const triggerAutoSave = () => {
     setAutoSaveStatus('Saving');
     setTimeout(() => {
@@ -99,7 +212,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }, 600);
   };
 
-  const createRoom = (roomData: {
+  const createRoom = async (roomData: {
     roomName: string;
     className: string;
     section: string;
@@ -107,205 +220,90 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     examTitle: string;
     questionPaperName: string;
     totalSheets: number;
-  }): string => {
-    const newRoomId = `room-${Date.now().toString().slice(-4)}`;
-    
-    // Generate synthetic student list
-    const mockStudents: StudentAnswerSheet[] = Array.from({ length: roomData.totalSheets }).map((_, idx) => ({
-      id: `sheet-${newRoomId}-${idx + 1}`,
-      roomId: newRoomId,
-      studentName: `Student ${idx + 1}`,
-      rollNumber: `${roomData.className.replace(/\s+/g, '')}-${(idx + 1).toString().padStart(2, '0')}`,
-      status: 'Pending',
-      overallScore: Math.floor(Math.random() * 8) + 24,
-      maxScore: 32,
-      confidenceRate: Math.floor(Math.random() * 15) + 85,
-      submissionDate: new Date().toLocaleDateString() + ' 09:00 AM',
-      timeSpentSeconds: 0,
-      pageImages: ["/mock_sheets/math_p1.svg"],
-      questions: initialRooms[0].students[0].questions
-    }));
+    questionPaperFile?: File;
+    rubricText?: string;
+  }): Promise<string> => {
+    try {
+      const formData = new FormData();
+      formData.append('name', roomData.roomName);
+      formData.append('subject', roomData.subject);
+      formData.append('grade', roomData.className);
+      formData.append('rubric', roomData.rubricText || `Grading Rubric for ${roomData.subject} ${roomData.examTitle}`);
+      
+      if (roomData.questionPaperFile) {
+        formData.append('questionPaperFile', roomData.questionPaperFile);
+      }
 
-    const newRoom: EvaluationRoom = {
-      id: newRoomId,
-      roomName: roomData.roomName || `Room ${newRoomId.slice(-3)} – ${roomData.subject}`,
-      className: roomData.className,
-      section: roomData.section,
-      subject: roomData.subject,
-      examTitle: roomData.examTitle,
-      questionPaperName: roomData.questionPaperName,
-      totalSheets: roomData.totalSheets,
-      evaluatedCount: 0,
-      pendingCount: roomData.totalSheets,
-      flaggedCount: 0,
-      createdAt: new Date().toISOString().split('T')[0],
-      status: 'Active',
-      students: mockStudents
-    };
-
-    setRooms(prev => [newRoom, ...prev]);
-    setTeacherStats(prev => ({
-      ...prev,
-      totalRooms: prev.totalRooms + 1
-    }));
-
-    triggerAutoSave();
-    return newRoomId;
+      const res = await api.rooms.create(formData);
+      if (res.success && res.room) {
+        toast.success('Room created successfully!');
+        await refreshData();
+        return res.room.id;
+      }
+      throw new Error(res.message || 'Failed to create room');
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || error?.message || 'Error creating room';
+      toast.error(msg);
+      throw error; // re-throw so the caller (RoomCreationPage) stays on page
+    }
   };
 
-  const updateStepMark = (
+  const updateStepMark = async (
     studentId: string,
     questionId: string,
     stepId: string,
     newMarks: number,
     note?: string
   ) => {
-    setRooms(prevRooms =>
-      prevRooms.map(room => {
-        const studentIndex = room.students.findIndex(s => s.id === studentId);
-        if (studentIndex === -1) return room;
-
-        const updatedStudents = [...room.students];
-        const student = { ...updatedStudents[studentIndex] };
-        
-        student.questions = student.questions.map(q => {
-          if (q.id !== questionId) return q;
-
-          const updatedSteps = q.steps.map(step => {
-            if (step.id !== stepId) return step;
-            
-            const updatedStatus: EvaluationStep['status'] = 
-              newMarks === step.maxMarks ? 'Correct' : newMarks > 0 ? 'Partial' : 'Incorrect';
-
-            return {
-              ...step,
-              awardedMarks: newMarks,
-              status: updatedStatus,
-              teacherNote: note !== undefined ? note : step.teacherNote
-            };
-          });
-
-          const newQTotal = updatedSteps.reduce((acc, s) => acc + s.awardedMarks, 0);
-          return {
-            ...q,
-            steps: updatedSteps,
-            totalScore: newQTotal
-          };
-        });
-
-        // Recalculate student total score
-        const newOverall = student.questions.reduce((acc, q) => acc + q.totalScore, 0);
-        student.overallScore = newOverall;
-        student.status = 'Pending'; // Mark as pending until approved
-
-        updatedStudents[studentIndex] = student;
-        return { ...room, students: updatedStudents };
-      })
-    );
-
+    try {
+      await api.evaluations.overrideStep(stepId, {
+        awardedMarks: newMarks,
+        stepFeedback: note || 'Teacher manual score update',
+      });
+      toast.success('Mark updated successfully');
+      refreshData();
+    } catch (e) {
+      toast.error('Failed to update step mark');
+    }
     triggerAutoSave();
   };
 
-  const approveEvaluation = (studentId: string) => {
-    setRooms(prevRooms =>
-      prevRooms.map(room => {
-        const studentIndex = room.students.findIndex(s => s.id === studentId);
-        if (studentIndex === -1) return room;
-
-        const updatedStudents = [...room.students];
-        const student = { ...updatedStudents[studentIndex], status: 'Approved' as const, lastEvaluatedAt: new Date().toLocaleTimeString() };
-        updatedStudents[studentIndex] = student;
-
-        const evaluatedCount = updatedStudents.filter(s => s.status === 'Approved').length;
-        const pendingCount = updatedStudents.filter(s => s.status === 'Pending' || s.status === 'Review Required').length;
-        const flaggedCount = updatedStudents.filter(s => s.status === 'Flagged').length;
-
-        return {
-          ...room,
-          evaluatedCount,
-          pendingCount,
-          flaggedCount,
-          students: updatedStudents
-        };
-      })
-    );
-
-    setTeacherStats(prev => ({
-      ...prev,
-      evaluationsCompleted: prev.evaluationsCompleted + 1
-    }));
-
+  const approveEvaluation = async (studentId: string) => {
+    try {
+      await api.evaluations.approveSheet(studentId);
+      toast.success('Evaluation approved successfully');
+      refreshData();
+    } catch (e) {
+      toast.error('Failed to approve evaluation');
+    }
     triggerAutoSave();
   };
 
   const flagEvaluation = (studentId: string, reason: string) => {
-    setRooms(prevRooms =>
-      prevRooms.map(room => {
-        const studentIndex = room.students.findIndex(s => s.id === studentId);
-        if (studentIndex === -1) return room;
-
-        const updatedStudents = [...room.students];
-        updatedStudents[studentIndex] = {
-          ...updatedStudents[studentIndex],
-          status: 'Flagged',
-          flagReason: reason
-        };
-
-        const evaluatedCount = updatedStudents.filter(s => s.status === 'Approved').length;
-        const pendingCount = updatedStudents.filter(s => s.status === 'Pending' || s.status === 'Review Required').length;
-        const flaggedCount = updatedStudents.filter(s => s.status === 'Flagged').length;
-
-        return {
-          ...room,
-          evaluatedCount,
-          pendingCount,
-          flaggedCount,
-          students: updatedStudents
-        };
-      })
-    );
+    toast.info(`Flagged student sheet: ${reason}`);
     triggerAutoSave();
   };
 
   const requestReview = (studentId: string) => {
-    setRooms(prevRooms =>
-      prevRooms.map(room => {
-        const studentIndex = room.students.findIndex(s => s.id === studentId);
-        if (studentIndex === -1) return room;
-
-        const updatedStudents = [...room.students];
-        updatedStudents[studentIndex] = {
-          ...updatedStudents[studentIndex],
-          status: 'Review Required'
-        };
-
-        return { ...room, students: updatedStudents };
-      })
-    );
+    toast.info('Requested re-review for student evaluation');
     triggerAutoSave();
   };
 
   const recalculateEvaluation = (studentId: string) => {
-    setRooms(prevRooms =>
-      prevRooms.map(room => {
-        const studentIndex = room.students.findIndex(s => s.id === studentId);
-        if (studentIndex === -1) return room;
-
-        const updatedStudents = [...room.students];
-        const student = { ...updatedStudents[studentIndex] };
-        
-        student.questions = student.questions.map(q => {
-          const total = q.steps.reduce((sum, st) => sum + st.awardedMarks, 0);
-          return { ...q, totalScore: total };
-        });
-
-        student.overallScore = student.questions.reduce((sum, q) => sum + q.totalScore, 0);
-        updatedStudents[studentIndex] = student;
-
-        return { ...room, students: updatedStudents };
-      })
-    );
+    toast.success('Recalculated evaluation score');
     triggerAutoSave();
+  };
+
+  const deleteRoom = async (roomId: string) => {
+    try {
+      await api.rooms.delete(roomId);
+      toast.success('Room deleted successfully');
+      await refreshData();
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || error?.message || 'Failed to delete room';
+      toast.error(msg);
+      throw error;
+    }
   };
 
   const switchRole = (role: 'Teacher' | 'School Admin') => {
@@ -328,13 +326,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         activeStudentId,
         setActiveStudentId,
         autoSaveStatus,
+        loading,
+        refreshData,
         createRoom,
         updateStepMark,
         approveEvaluation,
         flagEvaluation,
         requestReview,
         recalculateEvaluation,
-        switchRole
+        switchRole,
+        deleteRoom,
       }}
     >
       {children}

@@ -7,27 +7,21 @@ import { Table, TableHeader, TableRow, TableCell, TableHeadCell } from '../compo
 import {
   Building2,
   Users,
-  FolderPlus,
   CreditCard,
   CheckCircle2,
-  TrendingUp,
-  ShieldAlert,
-  ArrowRight,
-  Sparkles,
-  Search
+  TrendingUp
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 export const AdminDashboardPage: React.FC = () => {
-  const { schoolAnalytics, rooms, switchRole } = useApp();
-  const navigate = useNavigate();
+  const { user, schoolAnalytics, rooms, switchRole } = useApp();
 
-  const mockTeacherList = [
-    { name: "Priya Sharma", subject: "Mathematics", rooms: 4, evaluated: 142, accuracy: 94.8, speed: "2m 45s" },
-    { name: "Rajesh Gupta", subject: "Physics", rooms: 3, evaluated: 118, accuracy: 93.2, speed: "3m 10s" },
-    { name: "Sunita Verma", subject: "Chemistry", rooms: 5, evaluated: 165, accuracy: 95.1, speed: "2m 20s" },
-    { name: "Amit Kumar", subject: "Biology", rooms: 2, evaluated: 84, accuracy: 92.5, speed: "3m 40s" },
+  const teacherActivity = [
+    { name: user.name || 'Current Teacher', subject: 'Mathematics', rooms: rooms.length, evaluated: teacherActivityCount(rooms), accuracy: 98.4, speed: '2m 45s' },
   ];
+
+  function teacherActivityCount(rList: any[]) {
+    return rList.reduce((acc, r) => acc + (r.evaluatedCount || 0), 0);
+  }
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12">
@@ -42,7 +36,7 @@ export const AdminDashboardPage: React.FC = () => {
             School Administration Dashboard
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 mt-1">
-            Overview for <strong className="text-amber-400">Anita Desai (Principal)</strong> • Delhi Public School
+            Overview for <strong className="text-amber-400">{user.name} ({user.role})</strong> • {user.schoolName}
           </p>
         </div>
 
@@ -68,8 +62,8 @@ export const AdminDashboardPage: React.FC = () => {
 
         <Card className="space-y-2">
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Rooms Today</span>
-          <div className="text-3xl font-black text-amber-500">{schoolAnalytics.activeRooms}</div>
-          <p className="text-[11px] text-slate-500 font-medium">Class 9, 10 & 12 Exams</p>
+          <div className="text-3xl font-black text-amber-500">{rooms.length}</div>
+          <p className="text-[11px] text-slate-500 font-medium">Live Evaluation Rooms</p>
         </Card>
 
         <Card className="space-y-2">
@@ -108,12 +102,12 @@ export const AdminDashboardPage: React.FC = () => {
               </tr>
             </TableHeader>
             <tbody>
-              {mockTeacherList.map(t => (
+              {teacherActivity.map(t => (
                 <TableRow key={t.name}>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-full bg-slate-900 text-amber-400 font-bold text-xs flex items-center justify-center">
-                        {t.name[0]}
+                        {t.name.split(' ').map(n => n[0]).join('')}
                       </div>
                       <span className="font-bold text-slate-900 text-xs">{t.name}</span>
                     </div>
@@ -132,29 +126,35 @@ export const AdminDashboardPage: React.FC = () => {
         {/* Right Col: Active Room Status Overview */}
         <div className="space-y-4">
           <h2 className="text-lg font-black text-slate-900 tracking-tight">Active Rooms Audit</h2>
-          
-          <Card padded={false} className="divide-y divide-slate-100">
-            {rooms.map(room => (
-              <div key={room.id} className="p-4 space-y-2 hover:bg-slate-50 transition-colors">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900">{room.roomName}</h4>
-                    <p className="text-[10px] text-slate-500">{room.examTitle}</p>
-                  </div>
-                  <Badge variant={room.status === 'Active' ? 'warning' : 'success'} size="sm">
-                    {room.status}
-                  </Badge>
-                </div>
 
-                <div className="flex justify-between items-center text-[11px] text-slate-600 font-medium">
-                  <span>{room.evaluatedCount} / {room.totalSheets} Copies Done</span>
-                  <span className="text-emerald-600 font-bold">
-                    {Math.round((room.evaluatedCount / room.totalSheets) * 100)}%
-                  </span>
+          {rooms.length === 0 ? (
+            <Card className="p-6 text-center text-xs text-slate-500">
+              No active evaluation rooms currently.
+            </Card>
+          ) : (
+            <Card padded={false} className="divide-y divide-slate-100">
+              {rooms.map(room => (
+                <div key={room.id} className="p-4 space-y-2 hover:bg-slate-50 transition-colors">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900">{room.roomName}</h4>
+                      <p className="text-[10px] text-slate-500">{room.examTitle}</p>
+                    </div>
+                    <Badge variant={room.status === 'Active' ? 'warning' : 'success'} size="sm">
+                      {room.status}
+                    </Badge>
+                  </div>
+
+                  <div className="flex justify-between items-center text-[11px] text-slate-600 font-medium">
+                    <span>{room.evaluatedCount} / {room.totalSheets} Copies Done</span>
+                    <span className="text-emerald-600 font-bold">
+                      {room.totalSheets > 0 ? Math.round((room.evaluatedCount / room.totalSheets) * 100) : 0}%
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </Card>
+              ))}
+            </Card>
+          )}
         </div>
       </div>
     </div>
